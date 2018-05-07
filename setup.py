@@ -48,5 +48,5 @@ setup(
             'geranos-server = geranos.daemon:cli',
         ]
     },
-    install_requires=['paramiko', 'Flask', ]
+    install_requires=['paramiko', 'Flask', 'PyYAML', ]
 )

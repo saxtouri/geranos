@@ -15,17 +15,21 @@
 
 from flask import Flask, request, jsonify
 import logging
-import json
+import yaml
 from geranos import errors
 
 app = Flask(__name__)
+
+# Server variables
+CREDENTIALS = '/etc/geranos/credentials.yaml'
+NODES = '/etc/geranos/nodes.yaml'
 
 #Error handling
 
 @app.errorhandler(errors.Forbidden)
 @app.errorhandler(errors.BadRequest)
 def handle_errors(error):
-    response = jsonify(dict(message='{}'.format(error)))
+    response = jsonify(dict(message='{}'.format(error.message)))
     response.status_code = error.status_code
     return response
 
@@ -33,10 +37,14 @@ def handle_errors(error):
 # utils
 def _authenticate():
     """Check secret in headers"""
-    token = request.headers.get('X-Auth-Token')
-    if token:
-        return True
-    raise errors.Forbidden()
+    api_key = request.headers.get('X-API-KEY')
+    if api_key:
+        with open(CREDENTIALS) as f:
+            credentials = yaml.load(f.read())
+        for credential in credentials:
+            if credential.get('api-key') == api_key:
+                return True
+    raise errors.Forbidden('Access forbidden')
 
 # API
 @app.route('/nodes/all/docker/logs', methods=['GET', ])
@@ -50,7 +58,6 @@ def docker_logs():
         400: BAD REQUEST
     """
     app.logger.info('GET /nodes/all/docker/logs')
-    app.logger.debug('Headers: {}'.format(request.headers))
     _authenticate()
 
     raise Exception("Not implemented", 501)
@@ -58,6 +65,7 @@ def docker_logs():
 
 # For testing
 if __name__ == '__main__':
-
+    CREDENTIALS = 'credentials.yaml'
+    NODES = 'nodes.yaml'
     app.config.from_object(__name__)
     app.run(debug=True, host='localhost', port='8080')
