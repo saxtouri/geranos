@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 import logging
 import yaml
 from functools import wraps
@@ -62,8 +62,10 @@ def nodes_all_docker_logs():
         400: BAD REQUEST
     """
     app.logger.info('GET /nodes/all/docker/logs')
+    from geranos.hooks.nodes.all.docker.logs import get
+    r = get()
 
-    raise Exception("Not implemented", 501)
+    return make_response(r, 200)
 
 
 # For testing
