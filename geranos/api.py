@@ -63,7 +63,10 @@ def nodes_all_docker_logs():
     """
     app.logger.info('GET /nodes/all/docker/logs')
     from geranos.hooks.nodes.all.docker.logs import get
-    r = get()
+    try:
+        r = get(NODES, request)
+    except Exception as e:
+        raise errors.BadRequest(e)
 
     return make_response(r, 200)
 
