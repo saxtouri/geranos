@@ -17,16 +17,14 @@ import logging
 from geranos import errors
 from paramiko import SSHClient, RSAKey, AutoAddPolicy
 
-logger = logging.getLogger(__name__)
 
-
-def get(nodes_file, request):
-    """Return the logs"""
+def post(nodes_file, request):
+    """perform a docker pull"""
     args = dict(request.args.items())
     try:
-        container = args.pop('container')
+        image = args.pop('image')
     except KeyError:
-        raise errors.BadRequest('No container on URL arguments')
+        raise errors.BadRequest('No image on URL arguments')
     results = dict()
 
     with open(nodes_file) as f:
@@ -39,17 +37,16 @@ def get(nodes_file, request):
             raise
         ssh = SSHClient()
         ssh.set_missing_host_key_policy(AutoAddPolicy)
-        cmd = 'docker logs {container} {args}'.format(
-            container=container,
+        cmd = 'docker pull {image} {args}'.format(
+            image=image,
             args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
-        for _, ips in nodes.items():
-            for ip in ips:
-                ssh.connect(hostname=ip, username='root', pkey=pkey)
-                print('ssh root@{ip} {cmd}'.format(ip=ip, cmd=cmd))
-                _in, _out, _err = ssh.exec_command(cmd)
-                status = _out.channel.recv_exit_status()
-                results[ip] = dict(
-                    status=status, stdout=_out.read(), stderr=_err.read())
+        for ip in nodes['overweight']:
+            ssh.connect(hostname=ip, username='root', pkey=pkey)
+            print('ssh root@{ip} {cmd}'.format(ip=ip, cmd=cmd))
+            _in, _out, _err = ssh.exec_command(cmd)
+            status = _out.channel.recv_exit_status()
+            results[ip] = dict(
+                status=status, stdout=_out.read(), stderr=_err.read())
         ssh.close()
     return results

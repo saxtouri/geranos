@@ -54,15 +54,16 @@ def authenticate(func):
 @app.route('/all/docker/logs', methods=['GET', ])
 @authenticate
 def all_docker_logs():
-    """GET /nodes/all/docker/logs
+    """GET /nodes/all/docker/logs?container=<...>[&arg=value[...]]
     Header:
-        X-Auth-Secret: 
+        X-API-KEY: 
     Responses:
         200: OK
         403: FORBIDDEN
         400: BAD REQUEST
+        500: Internal Server Error
     """
-    app.logger.info('GET /nodes/all/docker/logs')
+    app.logger.info('GET /all/docker/logs')
     from geranos.hooks.all.docker.logs import get
     try:
         r = get(NODES, request)
@@ -75,9 +76,34 @@ def all_docker_logs():
     return make_response(jsonify(r), 200)
 
 
+@app.route('/overweight/docker/pull', methods=['POST', ])
+@authenticate
+def overweight_docker_pull():
+    """POST /overweight/docker/pull?image=<...>[&arg=value[...]]
+    Header:
+        X-API-KEY: 
+    Responses:
+        200: OK
+        403: FORBIDDEN
+        400: BAD REQUEST
+        500: Internal Server Error
+    """
+    app.logger.info('POST /overweight/docker/pull')
+    from geranos.hooks.overweight.docker.pull import post
+    try:
+        r = post(NODES, request)
+    except Exception as e:
+        if isinstance(e, errors.APIError):
+            raise
+        print_exc(e)
+        raise errors.APIError()
+
+    return make_response(jsonify(r), 201)
+
+
 # For testing
 if __name__ == '__main__':
     CREDENTIALS = 'credentials.yaml'
     NODES = 'nodes.yaml'
     app.config.from_object(__name__)
-    app.run(debug=False, host='localhost', port='8080')
+    app.run(debug=True, host='localhost', port='8080')
