@@ -16,6 +16,7 @@
 from flask import Flask, request, jsonify, make_response
 import logging
 import yaml
+from traceback import print_exc
 from functools import wraps
 from geranos import errors
 
@@ -62,13 +63,16 @@ def all_docker_logs():
         400: BAD REQUEST
     """
     app.logger.info('GET /nodes/all/docker/logs')
-    from geranos.hooks.nodes.all.docker.logs import get
+    from geranos.hooks.all.docker.logs import get
     try:
         r = get(NODES, request)
     except Exception as e:
-        raise errors.BadRequest(e)
+        if isinstance(e, errors.APIError):
+            raise
+        print_exc(e)
+        raise errors.APIError()
 
-    return make_response(r, 200)
+    return make_response(jsonify(r), 200)
 
 
 # For testing
@@ -76,4 +80,4 @@ if __name__ == '__main__':
     CREDENTIALS = 'credentials.yaml'
     NODES = 'nodes.yaml'
     app.config.from_object(__name__)
-    app.run(debug=True, host='localhost', port='8080')
+    app.run(debug=False, host='localhost', port='8080')

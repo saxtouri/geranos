@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class APIError(Exception):
-    """Template class for API Errors"""
+    """Internal Server Error"""
     status_code = 500
 
     def __init__(self, message=None, status_code=None, payload=None):

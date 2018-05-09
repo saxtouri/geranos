@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import yaml
 import logging
+from geranos import errors
+from paramiko import SSHClient, RSAKey, AutoAddPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +26,31 @@ def get(nodes_file, request):
     try:
         container = args.pop('container')
     except KeyError:
-        raise KeyError('No container on URL arguments')
+        raise errors.BadRequest('No container on URL arguments')
+    results = dict()
 
     with open(nodes_file) as f:
         nodes = yaml.load(f)
+        try:
+            rsa_key_file = nodes.pop('rsa_key')
+            pkey = RSAKey.from_private_key_file(rsa_key_file)
+        except Exception as e:
+            print('Failed to read RSA Key, {} {}'.format(type(e), e))
+            raise
+        ssh = SSHClient()
+        ssh.set_missing_host_key_policy(AutoAddPolicy)
+        cmd = 'docker logs {container} {args}'.format(
+            container=container,
+            args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
+
         for _, ips in nodes.items():
             for ip in ips:
-                print('ssh root@{ip} docker logs {container}'.format(
-                    ip=ip, container=container))
-        return '{}'.format(nodes)
-
-    return 'docker logs {}'.format(container)
+                ssh.connect(hostname=ip, username='root', pkey=pkey)
+                print('ssh root@{ip} {cmd}'.format(ip=ip, cmd=cmd))
+                _in, _out, _err = ssh.exec_command(cmd)
+                with _out as fout:
+                    with _err as ferr:
+                        results[ip] = dict(
+                            stdout=fout.read(), stderr=ferr.read())
+        ssh.close()
+    return results
