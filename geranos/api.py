@@ -50,9 +50,9 @@ def authenticate(func):
 
 
 # API
-@app.route('/nodes/all/docker/logs', methods=['GET', ])
+@app.route('/all/docker/logs', methods=['GET', ])
 @authenticate
-def nodes_all_docker_logs():
+def all_docker_logs():
     """GET /nodes/all/docker/logs
     Header:
         X-Auth-Secret: 

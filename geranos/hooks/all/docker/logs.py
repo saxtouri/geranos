@@ -35,4 +35,3 @@ def get(nodes_file, request):
         return '{}'.format(nodes)
 
     return 'docker logs {}'.format(container)
-
