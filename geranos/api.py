@@ -76,7 +76,7 @@ def all_docker_logs():
     return make_response(jsonify(r), 200)
 
 
-@app.route('/overweight/docker/pull', methods=['POST', ])
+@app.route('/overweight/docker/pull', methods=['POST', 'PUT'])
 @authenticate
 def overweight_docker_pull():
     """POST /overweight/docker/pull?image=<...>[&arg=value[...]]
@@ -89,9 +89,12 @@ def overweight_docker_pull():
         500: Internal Server Error
     """
     app.logger.info('POST /overweight/docker/pull')
-    from geranos.hooks.overweight.docker.pull import post
+    if request.method == 'POST':
+        from geranos.hooks.overweight.docker.pull import post as method
+    elif request.method == 'PUT':
+        from geranos.hooks.overweight.docker.pull import put as method
     try:
-        r = post(NODES, request)
+        r = method(NODES, request)
     except Exception as e:
         if isinstance(e, errors.APIError):
             raise

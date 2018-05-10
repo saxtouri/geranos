@@ -15,13 +15,12 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec
+from geranos.utils import ssh_exec, ssh_exec_no_wait
 
 logger = logging.getLogger(__name__)
 
 
-def post(nodes_file, request):
-    """perform a docker pull"""
+def _docker_pull(nodes_file, request, ssh_func):
     args = dict(request.args.items())
     try:
         image = args.pop('image')
@@ -44,9 +43,9 @@ def post(nodes_file, request):
     ips = []
     for ip_lists in nodes.values():
         ips += ip_lists
-    for ip in set(ips):
+    for ip in set(nodes['overweight']):
         try:
-            results[ip] = ssh_exec(
+            results[ip] = ssh_func(
                 hostname=ip, username='root',
                 rsa_key_file=rsa_key_file, cmd=cmd)
         except Exception as e:
@@ -54,3 +53,13 @@ def post(nodes_file, request):
             results[ip] = dict(
                 status=1, stdout='', stderr="Connection error", )
     return results
+
+
+def post(nodes_file, request):
+    """perform a docker pull"""
+    return _docker_pull(nodes_file, request, ssh_exec)
+
+
+def put(nodes_file, request):
+    """run a docker pull, let it run without waiting for it to finish"""
+    return _docker_pull(nodes_file, request, ssh_exec_no_wait)
