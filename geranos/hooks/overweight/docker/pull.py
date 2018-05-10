@@ -15,7 +15,9 @@
 import yaml
 import logging
 from geranos import errors
-from paramiko import SSHClient, RSAKey, AutoAddPolicy
+from geranos.utils import ssh_exec
+
+logger = logging.getLogger(__name__)
 
 
 def post(nodes_file, request):
@@ -29,24 +31,26 @@ def post(nodes_file, request):
 
     with open(nodes_file) as f:
         nodes = yaml.load(f)
-        try:
-            rsa_key_file = nodes.pop('rsa_key')
-            pkey = RSAKey.from_private_key_file(rsa_key_file)
-        except Exception as e:
-            print('Failed to read RSA Key, {} {}'.format(type(e), e))
-            raise
-        ssh = SSHClient()
-        ssh.set_missing_host_key_policy(AutoAddPolicy)
-        cmd = 'docker pull {image} {args}'.format(
-            image=image,
-            args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
+    try:
+        rsa_key_file = nodes.pop('rsa_key')
+    except Exception as e:
+        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
+        raise
 
-        for ip in nodes['overweight']:
-            ssh.connect(hostname=ip, username='root', pkey=pkey)
-            print('ssh root@{ip} {cmd}'.format(ip=ip, cmd=cmd))
-            _in, _out, _err = ssh.exec_command(cmd)
-            status = _out.channel.recv_exit_status()
+    cmd = 'docker pull {image} {args}'.format(
+        image=image,
+        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
+
+    ips = []
+    for ip_lists in nodes.values():
+        ips += ip_lists
+    for ip in set(ips):
+        try:
+            results[ip] = ssh_exec(
+                hostname=ip, username='root',
+                rsa_key_file=rsa_key_file, cmd=cmd)
+        except Exception as e:
+            logger.info('Failed with {} {}'.format(type(e), e))
             results[ip] = dict(
-                status=status, stdout=_out.read(), stderr=_err.read())
-        ssh.close()
+                status=1, stdout='', stderr="Connection error", )
     return results
