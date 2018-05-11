@@ -76,7 +76,7 @@ def all_docker_logs():
     return make_response(jsonify(r), 200)
 
 
-@app.route('/overweight/docker/pull', methods=['POST', 'PUT'])
+@app.route('/overweight/docker/pull', methods=['POST', 'PUT', 'GET'])
 @authenticate
 def overweight_docker_pull():
     """POST /overweight/docker/pull?image=<...>[&arg=value[...]]
@@ -92,6 +92,8 @@ def overweight_docker_pull():
     if request.method == 'POST':
         from geranos.hooks.overweight.docker.pull import post as method
     elif request.method == 'PUT':
+        from geranos.hooks.overweight.docker.pull import put as method
+    elif request.method == 'GET':
         from geranos.hooks.overweight.docker.pull import put as method
     try:
         r = method(NODES, request)

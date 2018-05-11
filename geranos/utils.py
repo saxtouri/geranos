@@ -59,3 +59,18 @@ def ssh_exec_no_wait(hostname, username, rsa_key_file, cmd):
     status = _out.channel.recv_exit_status()
     ssh.close()
     return dict(status=status, stdout="{}&".format(cmd), stderr="")
+
+
+def pop_rsa_key(nodes):
+    try:
+        return nodes.pop('rsa_key')
+    except Exception as e:
+        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
+        raise
+
+
+def pop_argument(args, argument):
+    try:
+        return args.pop(argument)
+    except KeyError:
+        raise errors.BadRequest('No {} on URL arguments'.format(argument))

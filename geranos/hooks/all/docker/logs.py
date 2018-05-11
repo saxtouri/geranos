@@ -15,27 +15,18 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec
+from geranos.utils import ssh_exec, pop_rsa_key, pop_argument
 
 logger = logging.getLogger(__name__)
 
 
 def get(nodes_file, request):
     """Return the logs"""
-    args = dict(request.args.items())
-    try:
-        container = args.pop('container')
-    except KeyError:
-        raise errors.BadRequest('No container on URL arguments')
-    results = dict()
-
+    args, results = dict(request.args.items()), dict()
+    container = pop_argument(args, 'container')
     with open(nodes_file) as f:
         nodes = yaml.load(f)
-    try:
-        rsa_key_file = nodes.pop('rsa_key')
-    except Exception as e:
-        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
-        raise
+    rsa_key_file = pop_rsa_key(nodes)
 
     cmd = 'docker logs {container} {args}'.format(
         container=container,

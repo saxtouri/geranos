@@ -15,34 +15,23 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec, ssh_exec_no_wait
+from geranos.utils import ssh_exec, ssh_exec_no_wait, pop_rsa_key, pop_argument
 
 logger = logging.getLogger(__name__)
 
 
 def _docker_pull(nodes_file, request, ssh_func):
-    args = dict(request.args.items())
-    try:
-        image = args.pop('image')
-    except KeyError:
-        raise errors.BadRequest('No image on URL arguments')
-    results = dict()
+    args, results = dict(request.args.items()), dict()
+    image = pop_argument(args, 'image')
 
     with open(nodes_file) as f:
         nodes = yaml.load(f)
-    try:
-        rsa_key_file = nodes.pop('rsa_key')
-    except Exception as e:
-        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
-        raise
+    rsa_key_file = pop_rsa_key(nodes)
 
     cmd = 'docker pull {image} {args}'.format(
         image=image,
         args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
-    ips = []
-    for ip_lists in nodes.values():
-        ips += ip_lists
     for ip in set(nodes['overweight']):
         try:
             results[ip] = ssh_func(
@@ -63,3 +52,33 @@ def post(nodes_file, request):
 def put(nodes_file, request):
     """run a docker pull, let it run without waiting for it to finish"""
     return _docker_pull(nodes_file, request, ssh_exec_no_wait)
+
+
+# def get(nodes_file, request):
+#     """Check the status of a docker pull
+#     Possible states:
+#         UNPULLED: the image is not pulled on this host
+#         PULLING: the image is being pulled currently
+#         PULLED: the images exists on this server
+#     """
+#     args, results = dict(request.args.items()), dict()
+#     image = pop_argument(args, 'image')
+
+#     with open(nodes_file) as f:
+#         nodes = yaml.load(f)
+#     rsa_key_file = pop_rsa_key(nodes)
+
+#     pulled_cmd = 'docker image inspect {image} -a'.format(image=image)
+#     cmd = 'docker image {image} -a|awk \'\{print $1\}|grep -w {image}\''
+#     pulling_cmd = cmd.format(image=image)
+
+#     for ip in set(nodes['overweight']):
+#         try:
+#             results[ip] = ssh_func(
+#                 hostname=ip, username='root',
+#                 rsa_key_file=rsa_key_file, cmd=cmd)
+#         except Exception as e:
+#             logger.info('Failed with {} {}'.format(type(e), e))
+#             results[ip] = dict(
+#                 status=1, stdout='', stderr="Connection error", )
+#     return results
