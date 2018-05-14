@@ -20,22 +20,22 @@ from geranos.utils import ssh_exec, pop_rsa_key, pop_argument
 logger = logging.getLogger(__name__)
 
 
-def get(nodes_file, request):
-    """Return the logs"""
-    args, results = dict(request.args.items()), dict()
+def _run(nodes_file, request, cmd):
+    args, results = request.args.to_dict(), dict()
     container = pop_argument(args, 'container')
+    cmd = cmd.format(
+        container=container,
+        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
+
     with open(nodes_file) as f:
         nodes = yaml.load(f)
     rsa_key_file = pop_rsa_key(nodes)
-
-    cmd = 'docker logs {container} {args}'.format(
-        container=container,
-        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
     ips = []
     for ip_lists in nodes.values():
         ips += ip_lists
     for ip in set(ips):
+        print(ip)
         try:
             results[ip] = ssh_exec(
                 hostname=ip, username='root',
@@ -43,5 +43,10 @@ def get(nodes_file, request):
         except Exception as e:
             logger.info('Failed with {} {}'.format(type(e), e))
             results[ip] = dict(
-                status=1, stdout='', stderr="Connection error", )
+                status=1, stdout='', stderr='Connection error', cmd=cmd)
     return results
+
+
+def get(nodes_file, request):
+    """Return the logs"""
+    return _run(nodes_file, request, 'docker logs {container} {args}')

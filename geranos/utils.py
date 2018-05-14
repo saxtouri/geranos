@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from geranos import errors
 from paramiko import SSHClient, RSAKey, AutoAddPolicy
 
 logger = logging.getLogger(__name__)
@@ -35,30 +36,10 @@ def ssh_exec(hostname, username, rsa_key_file, cmd):
     ssh.connect(hostname=hostname, username=username, pkey=pkey)
     _in, _out, _err = ssh.exec_command(cmd)
     status = _out.channel.recv_exit_status()
-    results = dict(status=status, stdout=_out.read(), stderr=_err.read())
+    results = dict(
+        status=status, stdout=_out.read(), stderr=_err.read(), command=cmd)
     ssh.close()
     return results
-
-
-def ssh_exec_no_wait(hostname, username, rsa_key_file, cmd):
-    try:
-        pkey = RSAKey.from_private_key_file(rsa_key_file)
-    except Exception as e:
-        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
-        raise
-    ssh = SSHClient()
-    ssh.set_missing_host_key_policy(AutoAddPolicy)
-    print('ssh -i {rsa_key_file} {username}@{hostname} {cmd}'.format(
-        rsa_key_file=rsa_key_file, hostname=hostname, username=username,
-        cmd=cmd))
-    logger.info('ssh -i {rsa_key_file} {username}@{hostname} {cmd}'.format(
-        rsa_key_file=rsa_key_file, hostname=hostname, username=username,
-        cmd=cmd))
-    ssh.connect(hostname=hostname, username=username, pkey=pkey)
-    _in, _out, _err = ssh.exec_command('{}&'.format(cmd))
-    status = _out.channel.recv_exit_status()
-    ssh.close()
-    return dict(status=status, stdout="{}&".format(cmd), stderr="")
 
 
 def pop_rsa_key(nodes):

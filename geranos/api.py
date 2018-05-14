@@ -94,7 +94,7 @@ def overweight_docker_pull():
     elif request.method == 'PUT':
         from geranos.hooks.overweight.docker.pull import put as method
     elif request.method == 'GET':
-        from geranos.hooks.overweight.docker.pull import put as method
+        from geranos.hooks.overweight.docker.pull import get as method
     try:
         r = method(NODES, request)
     except Exception as e:

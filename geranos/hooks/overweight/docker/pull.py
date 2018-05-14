@@ -15,70 +15,52 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec, ssh_exec_no_wait, pop_rsa_key, pop_argument
+from geranos.utils import ssh_exec, pop_rsa_key, pop_argument
 
 logger = logging.getLogger(__name__)
 
 
-def _docker_pull(nodes_file, request, ssh_func):
-    args, results = dict(request.args.items()), dict()
+def _run(nodes_file, request, cmd):
+    args, results = request.args.to_dict(), dict()
     image = pop_argument(args, 'image')
+    cmd = cmd.format(
+        image=image,
+        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
     with open(nodes_file) as f:
         nodes = yaml.load(f)
     rsa_key_file = pop_rsa_key(nodes)
 
-    cmd = 'docker pull {image} {args}'.format(
-        image=image,
-        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
-
     for ip in set(nodes['overweight']):
+        print(ip)
         try:
-            results[ip] = ssh_func(
+            results[ip] = ssh_exec(
                 hostname=ip, username='root',
                 rsa_key_file=rsa_key_file, cmd=cmd)
         except Exception as e:
             logger.info('Failed with {} {}'.format(type(e), e))
             results[ip] = dict(
-                status=1, stdout='', stderr="Connection error", )
+                status=1, stdout='', stderr='Connection error', cmd=cmd)
     return results
 
 
 def post(nodes_file, request):
     """perform a docker pull"""
-    return _docker_pull(nodes_file, request, ssh_exec)
-
+    return _run(nodes_file, request, 'docker pull {image} {args}')
 
 def put(nodes_file, request):
     """run a docker pull, let it run without waiting for it to finish"""
-    return _docker_pull(nodes_file, request, ssh_exec_no_wait)
+    return _run(nodes_file, request, 'docker pull {image} {args}&')
 
 
-# def get(nodes_file, request):
-#     """Check the status of a docker pull
-#     Possible states:
-#         UNPULLED: the image is not pulled on this host
-#         PULLING: the image is being pulled currently
-#         PULLED: the images exists on this server
-#     """
-#     args, results = dict(request.args.items()), dict()
-#     image = pop_argument(args, 'image')
-
-#     with open(nodes_file) as f:
-#         nodes = yaml.load(f)
-#     rsa_key_file = pop_rsa_key(nodes)
-
-#     pulled_cmd = 'docker image inspect {image} -a'.format(image=image)
-#     cmd = 'docker image {image} -a|awk \'\{print $1\}|grep -w {image}\''
-#     pulling_cmd = cmd.format(image=image)
-
-#     for ip in set(nodes['overweight']):
-#         try:
-#             results[ip] = ssh_func(
-#                 hostname=ip, username='root',
-#                 rsa_key_file=rsa_key_file, cmd=cmd)
-#         except Exception as e:
-#             logger.info('Failed with {} {}'.format(type(e), e))
-#             results[ip] = dict(
-#                 status=1, stdout='', stderr="Connection error", )
-#     return results
+def get(nodes_file, request):
+    """Check the status of a docker pull
+    No information about the results of the pull, just if it is stull running
+    Possible states:
+        ACTIVE: the image is being pulled currently
+        INACTIVE: the particular image in not pulled
+    """
+    r = _run(nodes_file, request,
+        cmd='ps aux|grep "docker pull {image}"|grep -v "grep"')
+    print(r)
+    return r
