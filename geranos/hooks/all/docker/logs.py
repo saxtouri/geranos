@@ -15,7 +15,8 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec, pop_rsa_key, pop_argument
+from geranos.utils import ssh_exec, pop_argument
+from geranos.hooks.all import get_hosts
 
 logger = logging.getLogger(__name__)
 
@@ -27,22 +28,12 @@ def _run(nodes_file, request, cmd):
         container=container,
         args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
-    with open(nodes_file) as f:
-        nodes = yaml.load(f)
-    rsa_key_file = pop_rsa_key(nodes)
-
-    ips = []
-    for ip_lists in nodes.values():
-        ips += ip_lists
-    for ip in set(ips):
-        print(ip)
+    for host in get_hosts(nodes_file):
         try:
-            results[ip] = ssh_exec(
-                hostname=ip, username='root',
-                rsa_key_file=rsa_key_file, cmd=cmd)
+            results[host['hostname']] = ssh_exec(cmd, **host)
         except Exception as e:
-            logger.info('Failed with {} {}'.format(type(e), e))
-            results[ip] = dict(
+            logger.info('Failed {} with {} {}'.format(host, type(e), e))
+            results[host['hostname']] = dict(
                 status=1, stdout='', stderr='Connection error', cmd=cmd)
     return results
 

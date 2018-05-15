@@ -19,7 +19,7 @@ from paramiko import SSHClient, RSAKey, AutoAddPolicy
 logger = logging.getLogger(__name__)
 
 
-def ssh_exec(hostname, username, rsa_key_file, cmd):
+def ssh_exec(cmd, hostname, username, rsa_key_file):
     try:
         pkey = RSAKey.from_private_key_file(rsa_key_file)
     except Exception as e:
@@ -42,16 +42,16 @@ def ssh_exec(hostname, username, rsa_key_file, cmd):
     return results
 
 
-def pop_rsa_key(nodes):
-    try:
-        return nodes.pop('rsa_key')
-    except Exception as e:
-        logger.info('Failed to read RSA Key, {} {}'.format(type(e), e))
-        raise
-
-
 def pop_argument(args, argument):
     try:
         return args.pop(argument)
     except KeyError:
         raise errors.BadRequest('No {} on URL arguments'.format(argument))
+
+
+def pop_term(nodes, term, not_found_message):
+    try:
+        return nodes.pop(term)
+    except Exception:
+        logger.debug(not_found_message)
+    return None

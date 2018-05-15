@@ -15,7 +15,8 @@
 import yaml
 import logging
 from geranos import errors
-from geranos.utils import ssh_exec, pop_rsa_key, pop_argument
+from geranos.utils import ssh_exec, pop_argument
+from geranos.hooks.overweight import get_hosts
 
 logger = logging.getLogger(__name__)
 
@@ -27,19 +28,12 @@ def _run(nodes_file, request, cmd):
         image=image,
         args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
 
-    with open(nodes_file) as f:
-        nodes = yaml.load(f)
-    rsa_key_file = pop_rsa_key(nodes)
-
-    for ip in set(nodes['overweight']):
-        print(ip)
+    for host in get_hosts(nodes_file):
         try:
-            results[ip] = ssh_exec(
-                hostname=ip, username='root',
-                rsa_key_file=rsa_key_file, cmd=cmd)
+            results[host['hostname']] = ssh_exec(cmd, **host)
         except Exception as e:
-            logger.info('Failed with {} {}'.format(type(e), e))
-            results[ip] = dict(
+            logger.info('Failed {} with {} {}'.format(host, type(e), e))
+            results[host['hostname']] = dict(
                 status=1, stdout='', stderr='Connection error', cmd=cmd)
     return results
 
@@ -47,6 +41,7 @@ def _run(nodes_file, request, cmd):
 def post(nodes_file, request):
     """perform a docker pull"""
     return _run(nodes_file, request, 'docker pull {image} {args}')
+
 
 def put(nodes_file, request):
     """run a docker pull, let it run without waiting for it to finish"""

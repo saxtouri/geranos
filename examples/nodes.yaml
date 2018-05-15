@@ -1,8 +1,15 @@
-rsa_key: /path/to/private/key
+rsa_key: /path/to/rsa-ssh/private/key
+username: root
 fit:
-- 88.888.888.100
-- 88.888.888.101
-- 88.888.888.102
+  username: debian
+  hosts:
+  - ip: 88.888.888.100
+    rsa_key: /path/to/antoher/rsa-ssh/private/key
+  - ip: 88.888.888.101
+  - ip: 88.888.888.102
 overweight:
-- 88.888.888.103
-- 88.888.888.104
+  hosts:
+  - ip: 88.888.888.103
+    username: user
+    rsa_key: /path/to/yet/antoher/rsa-ssh/private/key
+  - ip: 88.888.888.104
