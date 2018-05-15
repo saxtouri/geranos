@@ -12,9 +12,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import yaml
 import logging
-from geranos import errors
 from geranos.utils import ssh_exec, pop_argument
 from geranos.hooks.all import get_hosts
 

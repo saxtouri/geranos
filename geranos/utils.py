@@ -47,11 +47,3 @@ def pop_argument(args, argument):
         return args.pop(argument)
     except KeyError:
         raise errors.BadRequest('No {} on URL arguments'.format(argument))
-
-
-def pop_term(nodes, term, not_found_message):
-    try:
-        return nodes.pop(term)
-    except Exception:
-        logger.debug(not_found_message)
-    return None

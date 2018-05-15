@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import yaml
-from geranos.utils import pop_term
 
 logger = logging.getLogger(__name__)
 

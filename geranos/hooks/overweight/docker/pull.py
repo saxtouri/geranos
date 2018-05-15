@@ -12,9 +12,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import yaml
 import logging
-from geranos import errors
 from geranos.utils import ssh_exec, pop_argument
 from geranos.hooks.overweight import get_hosts
 
@@ -55,7 +53,6 @@ def get(nodes_file, request):
         ACTIVE: the image is being pulled currently
         INACTIVE: the particular image in not pulled
     """
-    r = _run(nodes_file, request,
-        cmd='ps aux|grep "docker pull {image}"|grep -v "grep"')
-    print(r)
+    cmd = 'ps aux|grep "docker pull {image}"|grep -v "grep"'
+    r = _run(nodes_file, request, cmd)
     return r

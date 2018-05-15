@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from flask import Flask, request, jsonify, make_response
-import logging
 import yaml
 from traceback import print_exc
 from functools import wraps
@@ -28,12 +27,14 @@ NODES = '/etc/geranos/nodes.yaml'
 
 # Common methods
 
+
 @app.errorhandler(errors.Forbidden)
 @app.errorhandler(errors.BadRequest)
 def handle_errors(error):
     response = jsonify(dict(message='{}'.format(error.message)))
     response.status_code = error.status_code
     return response
+
 
 def authenticate(func):
     """Check api key in headers before call"""
@@ -56,7 +57,7 @@ def authenticate(func):
 def all_docker_logs():
     """GET /nodes/all/docker/logs?container=<...>[&arg=value[...]]
     Header:
-        X-API-KEY: 
+        X-API-KEY: <api key>
     Responses:
         200: OK
         403: FORBIDDEN
@@ -81,7 +82,7 @@ def all_docker_logs():
 def overweight_docker_pull():
     """POST /overweight/docker/pull?image=<...>[&arg=value[...]]
     Header:
-        X-API-KEY: 
+        X-API-KEY: <api key>
     Responses:
         200: OK
         403: FORBIDDEN
