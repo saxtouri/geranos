@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 def get_hosts(nodes_file):
     """:returns: {ip: {username=..., rsa_key_file=...}}"""
-    logger.info('/all/overweight get_hosts')
+    logger.info('/all/heavy get_hosts')
     with open(nodes_file) as f:
         nodes = yaml.load(f)
     global_rsa = nodes.pop('rsa_key', None)
     global_username = nodes.pop('username', None)
 
-    group = nodes.get('overweight')
+    group = nodes.get('heavy')
     group_rsa = group.get('rsa_key', None)
     group_username = group.get('username', None)
     for host in group.get('hosts'):

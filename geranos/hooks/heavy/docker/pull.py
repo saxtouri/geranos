@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from geranos.utils import ssh_exec, pop_argument
-from geranos.hooks.overweight import get_hosts
+from geranos.hooks.heavy import get_hosts
 
 logger = logging.getLogger(__name__)
 

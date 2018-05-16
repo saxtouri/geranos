@@ -77,10 +77,10 @@ def all_docker_logs():
     return make_response(jsonify(r), 200)
 
 
-@app.route('/overweight/docker/pull', methods=['POST', 'PUT', 'GET'])
+@app.route('/heavy/docker/pull', methods=['POST', 'PUT', 'GET'])
 @authenticate
-def overweight_docker_pull():
-    """POST /overweight/docker/pull?image=<...>[&arg=value[...]]
+def heavy_docker_pull():
+    """POST /heavy/docker/pull?image=<...>[&arg=value[...]]
     Header:
         X-API-KEY: <api key>
     Responses:
@@ -89,13 +89,13 @@ def overweight_docker_pull():
         400: BAD REQUEST
         500: Internal Server Error
     """
-    app.logger.info('POST /overweight/docker/pull')
+    app.logger.info('POST /heavy/docker/pull')
     if request.method == 'POST':
-        from geranos.hooks.overweight.docker.pull import post as method
+        from geranos.hooks.heavy.docker.pull import post as method
     elif request.method == 'PUT':
-        from geranos.hooks.overweight.docker.pull import put as method
+        from geranos.hooks.heavy.docker.pull import put as method
     elif request.method == 'GET':
-        from geranos.hooks.overweight.docker.pull import get as method
+        from geranos.hooks.heavy.docker.pull import get as method
     try:
         r = method(NODES, request)
     except Exception as e:

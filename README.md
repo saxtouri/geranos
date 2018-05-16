@@ -118,7 +118,7 @@ $ curl -H'X-API-KEY: thesecretfromcredentialsyaml' \
     https://example.org/geranos/all/docker/logs?container=hello-world
 ```
 
-Pull the 'super/heavy:1.0.1' image to all overweight hosts
+Pull the 'super/heavy:1.0.1' image to all heavy hosts
 ```
 $ curl -H'X-API-KEY: thesecretfromcredentialsyaml' -XPOST \
     https://example.org/geranos/all/docker/logs?image=super%2Fheavy:1.0.1
