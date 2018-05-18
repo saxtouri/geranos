@@ -44,9 +44,13 @@ def authenticate(func):
         if api_key:
             with open(CREDENTIALS) as f:
                 credentials = yaml.load(f.read())
-            for credential in credentials:
-                if credential.get('api-key') == api_key:
-                    return func(*args, **kw)
+            try:
+                actual_key = credentials.get('api-key')
+            except KeyError:
+                app.logger.info('No api-key in {}'.format(CREDENTIALS))
+                raise errors.APIError()
+            if actual_key == api_key:
+                return func(*args, **kw)
         raise errors.Forbidden('Access forbidden')
     return wrap
 
