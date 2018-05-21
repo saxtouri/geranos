@@ -18,8 +18,10 @@ import yaml
 from traceback import print_exc
 from functools import wraps
 from geranos import errors
+import logging
 
 app = Flask(__name__)
+geranos_logger = logging.getLogger('geranos')
 
 # Server variables
 CREDENTIALS = '/etc/geranos/credentials.yaml'
@@ -117,3 +119,10 @@ if __name__ == '__main__':
     NODES = 'nodes.yaml'
     app.config.from_object(__name__)
     app.run(debug=True, host='localhost', port='8080')
+else:
+    # Support better GUnicorn logs
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    geranos_logger.handlers = gunicorn_logger.handlers
+    geranos_logger.setLevel(gunicorn_logger.level)
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)

@@ -27,9 +27,6 @@ def ssh_exec(cmd, hostname, username, rsa_key_file):
         raise
     ssh = SSHClient()
     ssh.set_missing_host_key_policy(AutoAddPolicy)
-    print('ssh -i {rsa_key_file} {username}@{hostname} {cmd}'.format(
-        rsa_key_file=rsa_key_file, hostname=hostname, username=username,
-        cmd=cmd))
     logger.info('ssh -i {rsa_key_file} {username}@{hostname} {cmd}'.format(
         rsa_key_file=rsa_key_file, hostname=hostname, username=username,
         cmd=cmd))
