@@ -61,7 +61,7 @@ def authenticate(func):
 @app.route('/all/docker/logs', methods=['GET', ])
 @authenticate
 def all_docker_logs():
-    """GET /nodes/all/docker/logs?container=<...>[&arg=value[...]]
+    """GET /all/docker/logs?container=<...>[&arg=value[...]]
     Header:
         X-API-KEY: <api key>
     Responses:
@@ -74,9 +74,34 @@ def all_docker_logs():
     from geranos.hooks.all.docker.logs import get
     try:
         r = get(NODES, request)
+    except errors.APIError:
+        raise
     except Exception as e:
-        if isinstance(e, errors.APIError):
-            raise
+        print_exc(e)
+        raise errors.APIError()
+
+    return make_response(jsonify(r), 200)
+
+
+@app.route('/all/docker/ps', methods=['GET', ])
+@authenticate
+def all_docker_ps():
+    """GET /all/docker/ps
+    Header:
+        X-API-KEY: <api key>
+    Responses:
+        200: OK
+        403: FORBIDDEN
+        400: BAD REQUEST
+        500: Internal Server error
+    """
+    app.logger.info('GET /all/docker/logs')
+    from geranos.hooks.all.docker.ps import get
+    try:
+        r = get(NODES, request)
+    except errors.APIError:
+        raise
+    except Exception as e:
         print_exc(e)
         raise errors.APIError()
 
@@ -111,6 +136,31 @@ def heavy_docker_pull():
         raise errors.APIError()
 
     return make_response(jsonify(r), 201)
+
+
+@app.route('/heavy/docker/ps', methods=['GET', ])
+@authenticate
+def heavy_docker_ps():
+    """GET /heavy/docker/ps
+    Header:
+        X-API-KEY: <api key>
+    Responses:
+        200: OK
+        403: FORBIDDEN
+        400: BAD REQUEST
+        500: Internal Server error
+    """
+    app.logger.info('GET /heavy/docker/logs')
+    from geranos.hooks.heavy.docker.ps import get
+    try:
+        r = get(NODES, request)
+    except errors.APIError:
+        raise
+    except Exception as e:
+        print_exc(e)
+        raise errors.APIError()
+
+    return make_response(jsonify(r), 200)
 
 
 # For testing
