@@ -14,10 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import yaml
+from geranos.utils import log_func
 
 logger = logging.getLogger(__name__)
 
 
+@log_func
 def get_hosts(nodes_file):
     """:returns: {ip: {username=..., rsa_key_file=...}}"""
     logger.info('/all/heavy get_hosts')

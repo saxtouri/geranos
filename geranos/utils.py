@@ -13,12 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from functools import wraps
 from geranos import errors
 from paramiko import SSHClient, RSAKey, AutoAddPolicy
 
 logger = logging.getLogger(__name__)
 
 
+def log_func(func):
+    @wraps(func)
+    def wrap(*args, **kw):
+        func_name = func.__name__
+        args_str = ' '.join(['{}'.format(a) for a in args])
+        kw_str = ' '.join(['{k}={v}'.format(k=k, v=v) for k, v in kw.items()])
+        logger.debug('{}: {} {}'.format(func_name, args_str, kw_str))
+        print('{}: {} {}'.format(func_name, args_str, kw_str))
+        return func(*args, **kw)
+    return wrap
+
+@log_func
 def ssh_exec(cmd, hostname, username, rsa_key_file):
     try:
         pkey = RSAKey.from_private_key_file(rsa_key_file)
@@ -39,6 +52,7 @@ def ssh_exec(cmd, hostname, username, rsa_key_file):
     return results
 
 
+@log_func
 def pop_argument(args, argument):
     try:
         return args.pop(argument)
