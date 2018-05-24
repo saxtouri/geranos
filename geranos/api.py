@@ -83,6 +83,36 @@ def all_docker_logs():
     return make_response(jsonify(r), 200)
 
 
+@app.route('/all/docker/pull', methods=['POST', 'PUT', 'GET'])
+@authenticate
+def all_docker_pull():
+    """POST /all/docker/pull?image=<...>[&arg=value[...]]
+    Header:
+        X-API-KEY: <api key>
+    Responses:
+        200: OK
+        403: FORBIDDEN
+        400: BAD REQUEST
+        500: Internal Server Error
+    """
+    app.logger.info('POST /all/docker/pull')
+    if request.method == 'POST':
+        from geranos.hooks.all.docker.pull import post as method
+    elif request.method == 'PUT':
+        from geranos.hooks.all.docker.pull import put as method
+    elif request.method == 'GET':
+        from geranos.hooks.all.docker.pull import get as method
+    try:
+        r = method(NODES, request)
+    except Exception as e:
+        if isinstance(e, errors.APIError):
+            raise
+        print_exc(e)
+        raise errors.APIError()
+
+    return make_response(jsonify(r), 201)
+
+
 @app.route('/all/docker/ps', methods=['GET', ])
 @authenticate
 def all_docker_ps():

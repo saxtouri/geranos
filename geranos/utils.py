@@ -31,6 +31,7 @@ def log_func(func):
         return func(*args, **kw)
     return wrap
 
+
 @log_func
 def ssh_exec(cmd, hostname, username, rsa_key_file):
     try:

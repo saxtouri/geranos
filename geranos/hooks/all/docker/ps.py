@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-from geranos.utils import ssh_exec, pop_argument, log_func, format_args
+from geranos.utils import ssh_exec, log_func, format_args
 from geranos.hooks.all import get_hosts
 
 logger = logging.getLogger(__name__)
