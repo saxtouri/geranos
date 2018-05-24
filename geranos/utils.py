@@ -27,7 +27,7 @@ def log_func(func):
         args_str = ' '.join(['{}'.format(a) for a in args])
         kw_str = ' '.join(['{k}={v}'.format(k=k, v=v) for k, v in kw.items()])
         logger.debug('{}: {} {}'.format(func_name, args_str, kw_str))
-        print('{}: {} {}'.format(func_name, args_str, kw_str))
+        print('  {}: {} {}'.format(func_name, args_str, kw_str))
         return func(*args, **kw)
     return wrap
 
@@ -58,3 +58,9 @@ def pop_argument(args, argument):
         return args.pop(argument)
     except KeyError:
         raise errors.BadRequest('No {} on URL arguments'.format(argument))
+
+
+@log_func
+def format_args(args):
+    return ' '.join(['--{}{}'.format(
+        a, '={}'.format(args[a]) if args[a] else '') for a in args])

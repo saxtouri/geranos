@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-from geranos.utils import ssh_exec, pop_argument, log_func
+from geranos.utils import ssh_exec, pop_argument, log_func, format_args
 from geranos.hooks.heavy import get_hosts
 
 logger = logging.getLogger(__name__)
@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 @log_func
 def _run(nodes_file, request, cmd):
     args, results = request.args.to_dict(), dict()
-    cmd = cmd.format(
-        args=' '.join(['--{}={}'.format(a, args[a]) for a in args]))
+    cmd = cmd.format(args=format_args(args))
 
     for host in get_hosts(nodes_file):
         try:
