@@ -138,6 +138,33 @@ def all_docker_ps():
     return make_response(jsonify(r), 200)
 
 
+@app.route('/all/cleanup', methods=['POST', ])
+@authenticate
+def all_cleanup():
+    """POST /all/cleanup
+    Header:
+        X-API-KEY: <api key>
+    Responses:
+        200: OK
+        403: FORBIDDEN
+        400: BAD REQUEST
+        500: Internal Server error
+    """
+    app.logger.info('GET /all/docker/logs')
+    from geranos.hooks.all import cleanup
+    r = dict()
+    try:
+        r['containers'] = cleanup.delete_old_containers(NODES, request)
+        r['images'] = cleanup.delete_unused_images(NODES, request)
+    except errors.APIError:
+        raise
+    except Exception as e:
+        print_exc(e)
+        raise errors.APIError()
+
+    return make_response(jsonify(r), 200)
+
+
 @app.route('/heavy/docker/pull', methods=['POST', 'PUT', 'GET'])
 @authenticate
 def heavy_docker_pull():

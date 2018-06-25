@@ -14,18 +14,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from geranos.utils import ssh_exec, pop_argument, log_func, format_args
+from geranos.utils import ssh_exec, log_func, format_args
 from geranos.hooks.all import get_hosts
 
 logger = logging.getLogger(__name__)
 
 
+cmd1 = 'docker ps -a --format \'{{.ID}} {{.Status}}\''
+cmd2 = 'awk \'{if ($4>=4 && $4!="weeks") print $1 " " $4}\''
+cmd = "{}|{}".format(cmd1, cmd2)
+
+
 @log_func
 def _run(nodes_file, request, cmd):
     args, results = request.args.to_dict(), dict()
-    image = pop_argument(args, 'image')
-    cmd = cmd.format(image=image, args=format_args(args))
-
     for host in get_hosts(nodes_file):
         try:
             results[host['hostname']] = ssh_exec(cmd, **host)
@@ -37,25 +39,15 @@ def _run(nodes_file, request, cmd):
 
 
 @log_func
-def post(nodes_file, request):
-    """perform a docker pull"""
-    return _run(nodes_file, request, 'docker pull {image} {args}')
+def delete_old_containers(nodes_file, request):
+    cmd1 = 'docker ps -a --format \'{{.ID}} {{.Status}}\''
+    awk_condition = ''
+    cmd2 = 'awk \'{if ($2=="Exited" && $4>=4 && $5=="weeks") print $1}\''
+    cmd = "docker rm $({}|{})".format(cmd1, cmd2)
+    return _run(nodes_file, request, cmd)
 
 
 @log_func
-def put(nodes_file, request):
-    """run a docker pull, let it run without waiting for it to finish"""
-    return _run(nodes_file, request, 'docker pull {image} {args} &')
-
-
-@log_func
-def get(nodes_file, request):
-    """Check the status of a docker pull
-    No information about the results of the pull, just if it is stull running
-    Possible states:
-        ACTIVE: the image is being pulled currently
-        INACTIVE: the particular image in not pulled
-    """
-    cmd = 'ps aux|grep "docker pull {image}"|grep -v "grep"'
-    r = _run(nodes_file, request, cmd)
-    return r
+def delete_unused_images(nodes_file, request):
+    cmd = 'docker rmi $(docker images -q -f dangling=true)'
+    return _run(nodes_file, request, cmd)
