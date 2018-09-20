@@ -17,12 +17,17 @@
 
 from setuptools import setup
 from geranos import __version__
+import os
+
+_file_path = os.path.realpath(__file__)
+_dir_path = os.path.dirname(_file_path)
+README_PATH = os.path.join(_dir_path, 'README.md')
 
 setup(
     name='geranos',
     version=__version__,
     description=('A REST API to handle docker containers froma distance'),
-    long_description=open('README.md').read(),
+    long_description=open(README_PATH).read(),
     url='',
     download_url='',
     license='GPLv3',
